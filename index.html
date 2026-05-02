@@ -368,7 +368,7 @@
 
         </div>
 
-        <button type="submit" class="submit-btn">Save to GitHub & Download PDF</button>
+        <button type="submit" class="submit-btn">Save to Google Sheet & Download PDF</button>
     </form>
 </div>
 
@@ -565,7 +565,7 @@
         }
     });
 
-    // Photo
+    // Photo Preview
     document.getElementById('photo').addEventListener('change', function(e) {
         if (e.target.files[0]) {
             const reader = new FileReader();
@@ -578,18 +578,18 @@
         }
     });
 
-    // Form Submit Event: Collect Data, Push to GitHub API, & Direct PDF Download
+    // Form Submit Event
     document.getElementById('interviewForm').addEventListener('submit', async function(e) {
         e.preventDefault(); 
         const submitBtn = document.querySelector('.submit-btn');
-        submitBtn.innerText = "Saving to GitHub & Downloading PDF...";
+        submitBtn.innerText = "Saving to Google Sheets & Downloading PDF...";
         submitBtn.disabled = true;
 
         // ==========================================
-        // 1. DATA COLLECTION FOR GITHUB JSON
+        // 1. DATA COLLECTION FOR GOOGLE SHEETS
         // ==========================================
         const formElements = document.querySelectorAll('#interviewForm input, #interviewForm select, #interviewForm textarea');
-        const formDataObj = { submissionTimestamp: new Date().toISOString() };
+        const formDataObj = {};
         
         formElements.forEach(el => {
             if (el.id && el.type !== 'file') {
@@ -597,51 +597,37 @@
             }
         });
 
-        const jsonData = JSON.stringify(formDataObj, null, 2);
-        const encodedData = btoa(unescape(encodeURIComponent(jsonData)));
+        // Convert object to URL-encoded string for Google Apps Script
+        const urlEncodedData = new URLSearchParams(formDataObj).toString();
 
         // ==========================================
-        // 2. GITHUB API DETAILS
+        // 2. SEND TO GOOGLE SHEETS API
         // ==========================================
-        const GITHUB_TOKEN = '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'; 
-        const REPO_OWNER = 'Brijesh7227'; 
-        const REPO_NAME = 'Demo'; 
+        // 👇 YAHAN_APNA_GOOGLE_SCRIPT_URL_PASTE_KAREIN 👇
+        const SCRIPT_URL = 'YAHAN_APNA_GOOGLE_SCRIPT_URL_PASTE_KAREIN'; 
         
-        let fName = document.getElementById('fName').value;
-        let surname = document.getElementById('surname').value;
-        const safeName = (fName || 'User').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-        const FILE_PATH = `submissions/${safeName}_${Date.now()}.json`; 
-        const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-
-        // ==========================================
-        // 3. SEND REQUEST TO GITHUB
-        // ==========================================
         try {
-            const response = await fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `New Application from ${fName}`,
-                    content: encodedData
-                })
-            });
-
-            if (!response.ok) {
-                console.error("GitHub API Error", await response.text());
-                // Silently continue to PDF generation even if GitHub fails
+            if (SCRIPT_URL !== 'YAHAN_APNA_GOOGLE_SCRIPT_URL_PASTE_KAREIN') {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: urlEncodedData
+                });
+                console.log("Saved to Google Sheets successfully.");
             } else {
-                console.log("Successfully saved to GitHub");
+                console.log("Please replace SCRIPT_URL to save data to Google Sheets.");
             }
         } catch (error) {
             console.error("Fetch Error:", error);
         }
 
         // ==========================================
-        // 4. MAP DATA TO PDF TEMPLATE
+        // 3. MAP DATA TO PDF TEMPLATE
         // ==========================================
+        let fName = document.getElementById('fName').value;
+        let surname = document.getElementById('surname').value;
         let mName = document.getElementById('mName').value;
         let position = document.getElementById('position').value;
         
@@ -802,7 +788,7 @@
         document.getElementById('printSignPlace').innerText = document.getElementById('declPlace').value;
 
         // ==========================================
-        // 5. DIRECT PDF DOWNLOAD (No Print Popup)
+        // 4. DIRECT PDF DOWNLOAD (No Print Popup)
         // ==========================================
         const element = document.getElementById('a4-output');
         element.style.display = 'block'; // Temporarily show the layout for PDF generation
@@ -817,12 +803,12 @@
 
         html2pdf().set(opt).from(element).save().then(() => {
             element.style.display = 'none'; // Hide it back after generation
-            submitBtn.innerText = "Save to GitHub & Download PDF";
+            submitBtn.innerText = "Save to Google Sheet & Download PDF";
             submitBtn.disabled = false;
         }).catch(err => {
             console.error("PDF Generation Error: ", err);
             element.style.display = 'none';
-            submitBtn.innerText = "Save to GitHub & Download PDF";
+            submitBtn.innerText = "Save to Google Sheet & Download PDF";
             submitBtn.disabled = false;
             alert("Oops! PDF download hone mein koi error aayi.");
         });
